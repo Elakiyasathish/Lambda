@@ -1,0 +1,21 @@
+pipeline {
+    agent any
+    stages {
+        stage('Start EC2 Instance') {
+            steps {
+                script {
+                    def instanceId = sh(script: "curl http://54.89.28.195:8080/job/Lambda/build?token=Start & instance_id=", returnStdout: true).trim()
+                    withCredentials([string(credentialsId: 'aws-credentials', variable: 'AWS_ACCESS_KEY_ID'),
+                                     string(credentialsId: 'aws-credentials', variable: 'AWS_SECRET_ACCESS_KEY')]) {
+                    withEnv(["AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}",
+                             "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}"]) 
+                             {
+                    def lambda = awsLambda function: 'Start_Instance',
+                        region: 'us-west-1'
+                    def response = lambda.invoke([instanceId: "${instance_id}"])
+                    echo "Response: ${response.result}"
+                }
+            }
+        }
+    }
+}
